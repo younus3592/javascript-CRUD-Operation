@@ -1,0 +1,13 @@
+body {
+    background-color: cornflowerblue;
+}
+
+#login-form {
+    background-color: #4185c8;
+    padding: 25px;
+    color: white;
+}
+
+.alert {
+    color: red;
+}
