@@ -15,6 +15,7 @@ var employeesListApp = {
         else{
              // clear all the  inputs
              $("[employee-input]").val("");
+
         }
 
         // remove the validation classes
@@ -25,6 +26,8 @@ var employeesListApp = {
         $("#employee-editor-modal").modal("show");
     },
     fillEmployeeFields: function(employeeObj) {
+
+        $("#employee-id").val(employeeObj.employeeId);
         $("#employee-code").val(employeeObj.employeeCode);
         $("#employee-name").val(employeeObj.employeeName);
         $("#employee-department").val(employeeObj.department);
@@ -42,7 +45,22 @@ var employeesListApp = {
             return ;
         }
 
-        var employeeObj = new Object();
+         
+        // I am updatind the exisiting record
+        var employeeId  = $("#employee-id").val();
+        
+        var isEditMode = employeeId ? true : false;
+        // when we are editing the employee
+        if(employeeId) 
+        {
+            var employeeObj = employeesListApp.employeesList.find(function(obj) {
+                return obj.employeeId == employeeId;
+            })
+        }
+        else{ // when we are creating a new employee record
+            var employeeObj = new Object();
+            employeeObj.employeeId = employeesListApp.employeesList.length + 1;
+        }
 
         employeeObj.employeeCode = $("#employee-code").val();
         employeeObj.employeeName = $("#employee-name").val();
@@ -51,14 +69,14 @@ var employeesListApp = {
         employeeObj.salary = $("#employee-salary").val();
         employeeObj.comments = $("#employee-comments").val();
 
-
-        employeeObj.employeeId = employeesListApp.employeesList.length + 1;
-
-       employeesListApp.employeesList.push(employeeObj);
+       //If we are adding a new record then push that object inside the array
+        if(!employeeId) {
+            employeesListApp.employeesList.push(employeeObj);
+        }
 
        $("#employee-editor-modal").modal("hide");
 
-       employeesListApp.addEmployeeRowToTable(employeeObj);
+       employeesListApp.addEmployeeRowToTable(employeeObj, isEditMode);
 
        $("#no-data-alert").hide();
 
@@ -116,24 +134,36 @@ var employeesListApp = {
         return isValid;
 
     },
-    addEmployeeRowToTable: function(employeeObj) {
+    addEmployeeRowToTable: function(employeeObj, isEditMode) {
         
         var tbody = $("#employee-tbody");
 
-        var tr = `<tr id="employee-${employeeObj.employeeId}">  
+        var newTr = `<tr id="employee-${employeeObj.employeeId}">  
                         <td>${employeeObj.employeeCode}</td>
                         <td>${employeeObj.employeeName} </td>
                         <td>${employeeObj.department} </td>
                         <td>${employeeObj.company} </td>
                         <td>${employeeObj.salary} </td>
                         <td>
+                        <a class="btn btn-secondary" onclick="employeesListApp.openEditorModal('${employeeObj.employeeId}')"> Edit </a>
                             <a class="btn btn-primary" onclick="employeesListApp.viewEmployee('${employeeObj.employeeId}')"> View </a>
                             <a class="btn btn-danger" onclick="employeesListApp.deleteEmployee('${employeeObj.employeeId}')"> Delete </a>
-                            <a class="btn btn-info" onclick="employeesListApp.openEditorModal('${employeeObj.employeeId}')"> Edit </a>
+                            
                         </td>
                   </tr> `
+           
+                  if(isEditMode) {
+                   
+                    // Finding the existing TR using employee Id
+                    var oldTr = $("tr#employee-" + employeeObj.employeeId);
+                   
+                    // update the Tr with the updated Data 
+                    oldTr.replaceWith(newTr);
 
-           tbody.append(tr);       
+                  }else{
+                    tbody.append(newTr);     
+                  }
+             
     },
     viewEmployee: function(employeeId) {
         var employeeObj = employeesListApp.employeesList.find(function(obj) {
@@ -163,6 +193,25 @@ var employeesListApp = {
        }
        
     },
+
+    searchEmployees: function(keyword) {
+       
+        $("#employee-tbody").empty();
+        
+       var filteredEmployees = employeesListApp.employeesList.filter(function(obj) {
+             return obj.employeeName.toLowerCase().includes(keyword.toLowerCase());
+        });
+      
+        if(filteredEmployees && filteredEmployees.length) {
+
+            filteredEmployees.forEach(function(currentEmpObj) {
+                employeesListApp.addEmployeeRowToTable(currentEmpObj);
+            })
+        }
+        else{
+            $("#no-data-alert").show();
+        }
+    }
     
 }
 
@@ -175,4 +224,37 @@ $(function() {
     $("#btn-save-employee").click(function() {
         employeesListApp.saveEmployees();
     })
+
+    $("#search-employees").change(function() {
+       employeesListApp.searchEmployees($(this).val());
+    })
+
+    $("#employee-salary").change(function() {
+
+        var salary = $(this).val();
+
+        $(this).removeClass("is-invalid");
+        $(this).removeClass("is-valid");
+
+         if(isNaN(salary)) {
+            $(this).addClass("is-invalid");
+         } else{
+            $(this).addClass("is-valid");
+         }
+    })
+
+    $("[employee-input]").blur(function() {
+
+        $(this).removeClass("is-invalid");
+        $(this).removeClass("is-valid");
+
+        if($(this).val()) {
+            $(this).addClass("is-valid");
+        } else{
+            $(this).addClass("is-invalid");
+        }
+         
+    })
+
+
 })
